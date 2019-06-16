@@ -35,20 +35,42 @@ class Task():
         height = np.round(self.sim.pose[2], 1)
         
         reward = -250
+        
+        # reward for right height
         reward += height
         reward -= 2*dist_z
         
-        #being in range of target z
+        # vertical velocity reward
+        reward += 0.1*self.sim.v[2]
+        
+        # neg reward when crashing
+        if done and self.sim.time < self.sim.runtime: 
+            reward = -100
+
+        # neg reward for difference between distance and velocity (slow down when in proximity)
+        reward -= 0.25*abs(dist_z-abs(self.sim.v[2]))
+
+        # being in range of target z
         if dist_z < 5:
             reward += 500
-            reward += 10*self.sim.time
+            reward += 10*self.sim.time # reward for flying time
             reward -= 1*dist_x
             reward -= 1*dist_y
+            # neg reward for difference between distance and velocity
+            reward -= 0.25*abs(dist_x-abs(self.sim.v[0]))
+            reward -= 0.25*abs(dist_y-abs(self.sim.v[2]))
             
+            # being in range of target x and y
             if (dist_x < 5) and (dist_y < 5):
                 reward += 500
                 reward += 10*self.sim.time
-                
+        
+        # reward for large Euler angles (prevent rolling/wobbling)
+        #lost, tbd
+        
+        # scaling
+        #reward = (reward + 350)/500
+        
         return reward
 
 
